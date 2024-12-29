@@ -8,8 +8,8 @@ const PLATFORM_GAP = {
   MAX: 300
 };
 
-const MIN_DISTANCE = 30;  
-const MAX_DISTANCE = 250;
+const MIN_DISTANCE = 1;  
+const MAX_DISTANCE = 100;
 
 let pressTime = 0;
 let isGameOver = false;
@@ -53,7 +53,7 @@ function drawScore() {
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.fillStyle = "#000";
   ctx.font = "20px Arial";
-  ctx.fillText(`Score: ${score}`, 20, 30);
+  ctx.fillText(`分数:  ${score}`, 20, 30);
   ctx.restore();
 }
 
