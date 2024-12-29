@@ -57,11 +57,11 @@ function drawScore() {
   ctx.restore();
 }
 
-// 修改玩家绘制函数，添加形变效果
+// 定义玩家的图片
+const playerImage = new Image();
+playerImage.src = "image/Character1.png"; // 替换为你的图片路径
+
 function drawPlayer() {
-  ctx.fillStyle = player.color;
-  ctx.beginPath();
-  
   // 保存当前状态
   ctx.save();
   
@@ -70,15 +70,22 @@ function drawPlayer() {
   
   // 应用形变
   ctx.scale(1, player.squashFactor);
-  
-  // 绘制圆形
-  ctx.beginPath();
-  ctx.arc(0, 0, player.size, 0, Math.PI * 2);
-  ctx.fill();
-  
+
+  // 绘制图片
+  const imageWidth = player.size * 2; // 图片的宽度，根据玩家大小调整
+  const imageHeight = player.size * 2 * player.squashFactor; // 根据形变调整高度
+  ctx.drawImage(
+    playerImage, 
+    -imageWidth / 2, // 图片的左上角 X 坐标
+    -imageHeight / 2, // 图片的左上角 Y 坐标
+    imageWidth, // 图片宽度
+    imageHeight // 图片高度
+  );
+
   // 恢复状态
   ctx.restore();
 }
+
 
 // 更新玩家形变
 function updatePlayerSquash() {
@@ -122,39 +129,43 @@ function showPointsEarned(points) {
 }
 
 function updatePlayer() {
-  if (player.isJumping) {
-    player.x += player.vx * 0.03;
-    player.y += player.vy * 0.03;
-    player.vy += 1.0;
-
-    platforms.forEach(platform => {
-      if (
-        player.x + player.size > platform.x &&
-        player.x - player.size < platform.x + platform.width &&
-        player.y + player.size > platform.y &&
-        player.y + player.size < platform.y + 10
-      ) {
-        player.y = platform.y - player.size;
-        player.vy = 0;
-        player.isJumping = false;
-        
-        if (platform !== platforms[0]) {
-          const pointsEarned = calculateLandingScore(player.x, platform.x, platform.width);
-          score += pointsEarned;
-          showPointsEarned(pointsEarned);
-          
-          platforms.push(generateTargetPlatform(platform.x));
-          platforms.shift();
+    if (player.isJumping) {
+      player.x += player.vx * 0.05;
+      player.y += player.vy * 0.05;
+  
+      // 增加重力加速度
+      const gravity = 1.5; // 调大这个值
+      player.vy += gravity;
+  
+      platforms.forEach(platform => {
+        if (
+          player.x + player.size > platform.x &&
+          player.x - player.size < platform.x + platform.width &&
+          player.y + player.size > platform.y &&
+          player.y + player.size < platform.y + 10
+        ) {
+          player.y = platform.y - player.size;
+          player.vy = 0;
+          player.isJumping = false;
+  
+          if (platform !== platforms[0]) {
+            const pointsEarned = calculateLandingScore(player.x, platform.x, platform.width);
+            score += pointsEarned;
+            showPointsEarned(pointsEarned);
+  
+            platforms.push(generateTargetPlatform(platform.x));
+            platforms.shift();
+          }
         }
+      });
+  
+      if (player.y > canvas.height) {
+        isGameOver = true;
+        showGameOver();
       }
-    });
-
-    if (player.y > canvas.height) {
-      isGameOver = true;
-      showGameOver();
     }
   }
-}
+  
 
 function showGameOver() {
   ctx.save();
