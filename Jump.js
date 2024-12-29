@@ -2,6 +2,36 @@ const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 canvas.width = 600;
 canvas.height = 400;
+const audioManager = {
+    backgroundMusic: new Audio("audio/sea.mp3"),
+    chargeSound: new Audio("audio/charge.mp3"),
+    
+    init() {
+      this.backgroundMusic.loop = true;
+      this.backgroundMusic.volume = 0.5;
+      
+      // 添加错误处理
+      this.backgroundMusic.addEventListener('error', (e) => {
+        console.error('背景音乐加载失败:', e);
+      });
+      
+      this.chargeSound.addEventListener('error', (e) => {
+        console.error('蓄力音效加载失败:', e);
+      });
+    },
+    
+    async startBackgroundMusic() {
+      try {
+        // 等待用户交互后再播放
+        await this.backgroundMusic.play();
+      } catch (error) {
+        console.log('需要用户交互才能播放音乐:', error);
+      }
+    }
+  };
+  
+  // 初始化音频
+  audioManager.init();
 
 const PLATFORM_WIDTH = {
     MIN: 50,
@@ -281,7 +311,42 @@ canvas.addEventListener("mouseup", () => {
       isCharging = false;
     }
   });
-  
+
+// 在用户首次点击时开始播放背景音乐
+canvas.addEventListener('click', () => {
+  audioManager.startBackgroundMusic();
+}, { once: true }); // once: true 确保只绑定一次
+
+// 修改原有的鼠标事件处理
+canvas.addEventListener("mousedown", () => {
+  if (!isGameOver && !player.isJumping) {
+    pressTime = Date.now();
+    chargeStartTime = Date.now();
+    isCharging = true;
+    
+    // 播放蓄力音效
+    audioManager.chargeSound.currentTime = 0;
+    audioManager.chargeSound.play().catch(e => console.log('蓄力音效播放失败:', e));
+  }
+});
+
+canvas.addEventListener("mouseup", () => {
+  if (!isGameOver && !player.isJumping) {
+    const holdTime = (Date.now() - pressTime) / 1000;
+    let jumpDistance = holdTime * 200;
+    
+    jumpDistance = Math.max(MIN_DISTANCE, Math.min(jumpDistance, MAX_DISTANCE));
+    
+    player.vx = jumpDistance;
+    player.vy = -jumpDistance * 0.4;
+    player.isJumping = true;
+    isCharging = false;
+    
+    // 停止蓄力音效
+    audioManager.chargeSound.pause();
+    audioManager.chargeSound.currentTime = 0;
+  }
+});
 
 function gameLoop() {
   if (!isGameOver) {
