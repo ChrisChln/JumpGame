@@ -3,6 +3,11 @@ const ctx = canvas.getContext("2d");
 canvas.width = 600;
 canvas.height = 400;
 
+const PLATFORM_WIDTH = {
+    MIN: 50,
+    MAX: 120
+  };
+
 const PLATFORM_GAP = {
   MIN: 150,
   MAX: 300
@@ -42,11 +47,18 @@ let camera = {
 };
 
 function generateTargetPlatform(lastPlatformX) {
-  const platformWidth = 100;
-  const gap = Math.random() * (PLATFORM_GAP.MAX - PLATFORM_GAP.MIN) + PLATFORM_GAP.MIN;
-  const x = lastPlatformX + gap;
-  return { x: Math.round(x), y: 320, width: platformWidth };
-}
+    // 生成一个随机宽度，范围在 MIN 和 MAX 之间
+    const platformWidth = Math.random() * (PLATFORM_WIDTH.MAX - PLATFORM_WIDTH.MIN) + PLATFORM_WIDTH.MIN;
+    
+    // 生成平台之间的间隙
+    const gap = Math.random() * (PLATFORM_GAP.MAX - PLATFORM_GAP.MIN) + PLATFORM_GAP.MIN;
+    
+    // 计算平台的 X 坐标
+    const x = lastPlatformX + gap;
+    
+    // 返回生成的平台对象，包含随机宽度
+    return { x: Math.round(x), y: 320, width: Math.round(platformWidth) };
+  }
 
 function drawScore() {
   ctx.save();
@@ -87,25 +99,39 @@ function drawPlayer() {
 }
 
 
-// 更新玩家形变
 function updatePlayerSquash() {
-  if (isCharging) {
-    // 计算已蓄力时间
-    const chargeDuration = (Date.now() - chargeStartTime) / 1000;
-    // 根据蓄力时间计算压缩程度，最多压缩到0.7倍高度
-    player.squashFactor = Math.max(0.7, 1 - chargeDuration * 0.5);
-  } else {
-    // 不在蓄力状态时逐渐恢复原形
-    player.squashFactor += (1 - player.squashFactor) * 0.2;
+    if (isCharging) {
+      // 计算已蓄力时间
+      const chargeDuration = (Date.now() - chargeStartTime) / 1000;
+      // 让蓄力时间稍微延长一点
+      player.squashFactor = Math.max(0.7, 1 - (chargeDuration * 0.3)); // 调整0.3来延长蓄力时间
+    } else {
+      // 不在蓄力状态时逐渐恢复原形
+      player.squashFactor += (1 - player.squashFactor) * 0.2;
+    }
   }
-}
-
+  
 function drawPlatforms() {
-  ctx.fillStyle = "#8d6e63";
-  platforms.forEach(platform => {
-    ctx.fillRect(platform.x - camera.x, platform.y - camera.y, platform.width, 10);
-  });
-}
+    platforms.forEach(platform => {
+      // 创建阴影
+      ctx.save();
+      ctx.shadowColor = "rgba(0, 0, 0, 0.5)";
+      ctx.shadowOffsetX = 2;
+      ctx.shadowOffsetY = 2;
+      ctx.shadowBlur = 4;
+  
+      const gradient = ctx.createLinearGradient(platform.x - camera.x, platform.y - camera.y, platform.x - camera.x, platform.y + 10 - camera.y);
+      gradient.addColorStop(0, "#8d6e63");
+      gradient.addColorStop(1, "#3e2723");
+  
+      ctx.fillStyle = gradient;
+      ctx.fillRect(platform.x - camera.x, platform.y - camera.y, platform.width, 10);
+  
+      ctx.restore();
+    });
+  }
+  
+  
 
 function calculateLandingScore(playerX, platformX, platformWidth) {
   const platformCenter = platformX + platformWidth / 2;
@@ -196,13 +222,13 @@ function showGameOver() {
 
 function updateCamera() {
   camera.targetX = player.x - canvas.width / 3;
-  camera.targetY = player.y - canvas.height / 2;
+
 
   camera.x += (camera.targetX - camera.x) * 0.1;
-  camera.y += (camera.targetY - camera.y) * 0.1;
+
 
   camera.x = Math.max(0, camera.x);
-  camera.y = Math.max(0, camera.y);
+
 }
 
 function restartGame() {
@@ -243,18 +269,19 @@ canvas.addEventListener("mousedown", () => {
 });
 
 canvas.addEventListener("mouseup", () => {
-  if (!isGameOver && !player.isJumping) {
-    const holdTime = (Date.now() - pressTime) / 1000;
-    let jumpDistance = holdTime * 200;
-
-    jumpDistance = Math.max(MIN_DISTANCE, Math.min(jumpDistance, MAX_DISTANCE));
-
-    player.vx = jumpDistance;
-    player.vy = -jumpDistance * 0.5;
-    player.isJumping = true;
-    isCharging = false;
-  }
-});
+    if (!isGameOver && !player.isJumping) {
+      const holdTime = (Date.now() - pressTime) / 1000;
+      let jumpDistance = holdTime * 200; // 增加蓄力影响的比例，数值越大跳跃越远
+  
+      jumpDistance = Math.max(MIN_DISTANCE, Math.min(jumpDistance, MAX_DISTANCE));
+  
+      player.vx = jumpDistance;
+      player.vy = -jumpDistance * 0.4;
+      player.isJumping = true;
+      isCharging = false;
+    }
+  });
+  
 
 function gameLoop() {
   if (!isGameOver) {
