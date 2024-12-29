@@ -222,15 +222,7 @@ function restartGame() {
     // 重新开始游戏循环
     requestAnimationFrame(gameLoop);
   }
-  
 
-canvas.addEventListener("mousedown", () => {
-  if (!isGameOver && !player.isJumping) {
-    pressTime = Date.now();
-    chargeStartTime = Date.now();
-    isCharging = true;
-  }
-});
 canvas.addEventListener("mousedown", () => {
   if (!isGameOver && !player.isJumping) {
     pressTime = Date.now();
@@ -262,36 +254,11 @@ function gameLoop() {
     drawPlatforms();
     drawPlayer();
     drawScore();
-    drawWaterBackground(); // 绘制水面
     requestAnimationFrame(gameLoop);
   } else {
     showGameOver(); // 显示游戏结束画面
   }
 }
 
-function drawWaterBackground() {
-    const waterHeight = 170; // 水的高度
-    const waterY = canvas.height - waterHeight; // 确保水始终在画布底部
-
-    // 保存当前的绘制状态
-    ctx.save();
-
-    // 重置所有变换矩阵，防止相机逻辑影响
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-
-    // 创建水面的线性渐变
-    const gradient = ctx.createLinearGradient(0, waterY, 0, canvas.height);
-    gradient.addColorStop(0, "rgba(0, 172, 193, 0.6)");
-    gradient.addColorStop(1, "rgba(0, 172, 193, 0.2)");
-
-    // 填充水面矩形
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, canvas.height - waterHeight, canvas.width, waterHeight);
-
-    // 恢复绘制状态
-    ctx.restore();
-}
-
-
-  
+// 启动游戏循环
 gameLoop();
