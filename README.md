@@ -1,1 +1,1 @@
-Jumping Game Click open the html file to run!
+Jumping Game open the html file to run!
